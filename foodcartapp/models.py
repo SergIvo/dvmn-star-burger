@@ -143,7 +143,7 @@ class Order(models.Model):
         'адрес доставки',
         max_length=200
     )
-    
+
     class Meta:
         verbose_name = 'заказ на доставку'
         verbose_name_plural = 'заказы на доставку'
@@ -154,28 +154,27 @@ class Order(models.Model):
 
 class OrderComponent(models.Model):
     product = models.ForeignKey(
-    Product,
-    verbose_name='продукт',
-    related_name='in_orders',
-    on_delete=models.CASCADE,
+        Product,
+        verbose_name='продукт',
+        related_name='in_orders',
+        on_delete=models.CASCADE,
     )
-    
+
     order = models.ForeignKey(
-    Order,
-    verbose_name='заказ',
-    related_name='components',
-    on_delete=models.CASCADE,
+        Order,
+        verbose_name='заказ',
+        related_name='components',
+        on_delete=models.CASCADE,
     )
-    
+
     amount = models.PositiveSmallIntegerField(
         'количество',
         validators=[MinValueValidator(0)]
     )
-    
+
     class Meta:
         verbose_name = 'компонент заказа'
         verbose_name_plural = 'компоненты заказа'
 
     def __str__(self):
         return f'{self.product.name}: {self.amount}'
-
