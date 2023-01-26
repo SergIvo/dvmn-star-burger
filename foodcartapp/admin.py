@@ -7,6 +7,8 @@ from .models import Product
 from .models import ProductCategory
 from .models import Restaurant
 from .models import RestaurantMenuItem
+from .models import Order
+from .models import OrderComponent
 
 
 class RestaurantMenuItemInline(admin.TabularInline):
@@ -99,6 +101,32 @@ class ProductAdmin(admin.ModelAdmin):
         edit_url = reverse('admin:foodcartapp_product_change', args=(obj.id,))
         return format_html('<a href="{edit_url}"><img src="{src}" style="max-height: 50px;"/></a>', edit_url=edit_url, src=obj.image.url)
     get_image_list_preview.short_description = 'превью'
+
+
+class OrderComponentInline(admin.TabularInline):
+    model = OrderComponent
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    search_fields = [
+        'customer_phonenumber',
+        'address',
+    ]
+    list_display = [
+        'customer_name',
+        'customer_last_name',
+        'customer_phonenumber',
+        'address',
+    ]
+    inlines = [
+        OrderComponentInline
+    ]
+
+
+@admin.register(OrderComponent)
+class OrderComponentAdmin(admin.ModelAdmin):
+    pass
 
 
 @admin.register(ProductCategory)
