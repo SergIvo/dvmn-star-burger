@@ -139,7 +139,7 @@ class Order(models.Model):
         'номер телефона покупателя',
         region='RU'
     )
-    adress = models.CharField(
+    address = models.CharField(
         'адрес доставки',
         max_length=200
     )
