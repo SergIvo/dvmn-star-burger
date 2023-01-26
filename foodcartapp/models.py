@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Restaurant(models.Model):
@@ -97,7 +98,7 @@ class RestaurantMenuItem(models.Model):
     restaurant = models.ForeignKey(
         Restaurant,
         related_name='menu_items',
-        verbose_name="ресторан",
+        verbose_name='ресторан',
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
@@ -120,4 +121,61 @@ class RestaurantMenuItem(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.restaurant.name} - {self.product.name}"
+        return f'{self.restaurant.name} - {self.product.name}'
+
+
+class Order(models.Model):
+    customer_name = models.CharField(
+        'имя покупателя',
+        max_length=50
+    )
+    customer_last_name = models.CharField(
+        'фамилия покупателя',
+        max_length=50,
+        default='',
+        blank=True
+    )
+    customer_phonenumber = PhoneNumberField(
+        'номер телефона покупателя',
+        region='RU'
+    )
+    adress = models.CharField(
+        'адрес доставки',
+        max_length=200
+    )
+    
+    class Meta:
+        verbose_name = 'заказ на доставку'
+        verbose_name_plural = 'заказы на доставку'
+
+    def __str__(self):
+        return f'{self.customer_name}, {self.customer_phonenumber}'
+
+
+class OrderComponent(models.Model):
+    product = models.ForeignKey(
+    Product,
+    verbose_name='продукт',
+    related_name='in_orders',
+    on_delete=models.CASCADE,
+    )
+    
+    order = models.ForeignKey(
+    Order,
+    verbose_name='заказ',
+    related_name='components',
+    on_delete=models.CASCADE,
+    )
+    
+    amount = models.PositiveSmallIntegerField(
+        'количество',
+        validators=[MinValueValidator(0)]
+    )
+    
+    class Meta:
+        verbose_name = 'компонент заказа'
+        verbose_name_plural = 'компоненты заказа'
+
+    def __str__(self):
+        return f'{self.product.name}: {self.amount}'
+
