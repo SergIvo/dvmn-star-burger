@@ -1,6 +1,8 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 
 
 from .models import Product, Order, OrderComponent
@@ -61,6 +63,52 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     order_details = request.data
+
+    required_types = {
+        'products': list,
+        'firstname': str,
+        'phonenumber': str,
+        'address': str,
+    }
+
+    for variable, var_type in required_types.items():
+        if not order_details.get(variable):
+            return Response(
+                {'ValueError': f'{variable} must not be empty or null'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        elif not isinstance(order_details.get(variable), var_type):
+            return Response(
+                {'TypeError': f'{variable} must have type {var_type}, not {type(order_details.get(variable))}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    for component in order_details['products']:
+        if not isinstance(component, dict):
+            return Response(
+                {'TypeError': 'Product list must only contain dictionaries'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            product_value = component['product']
+            quantity_value = component['quantity']
+            1 / (product_value * quantity_value)
+        except KeyError:
+            return Response(
+                {'KeyError': 'Each product dictionary must have two keys: product, quantity'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except TypeError:
+            return Response(
+                {'TypeError': 'Each key in product dictionary must have type <int>'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except ZeroDivisionError:
+            return Response(
+                {'ValueError': 'Each key in product dictionary must not be zero'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     order = Order.objects.create(
         customer_name=order_details['firstname'],
         customer_last_name=order_details.get('lastname'),
@@ -74,4 +122,7 @@ def register_order(request):
             order=order,
             amount=component['quantity']
         )
-    return JsonResponse({})
+    return Response(
+        {'status': 'order created successfully'},
+        status=status.HTTP_201_CREATED
+    )
