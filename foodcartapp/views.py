@@ -1,4 +1,6 @@
+import phonenumbers
 from django.http import JsonResponse
+from django.core.exceptions import ObjectDoesNotExist
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -72,14 +74,27 @@ def register_order(request):
     }
 
     for variable, var_type in required_types.items():
-        if not order_details.get(variable):
+        if not isinstance(order_details.get(variable), var_type):
+            return Response(
+                {'TypeError': f'{variable} must have type {var_type}, not {type(order_details.get(variable))}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        elif not order_details.get(variable):
             return Response(
                 {'ValueError': f'{variable} must not be empty or null'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        elif not isinstance(order_details.get(variable), var_type):
+
+    try:
+        parsed_number = phonenumbers.parse(order_details['phonenumber'], 'RU')
+        if not phonenumbers.is_valid_number(parsed_number):
             return Response(
-                {'TypeError': f'{variable} must have type {var_type}, not {type(order_details.get(variable))}'},
+                {'ValueError': 'Phone number is not valid'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    except phonenumbers.phonenumberutil.NumberParseException:
+        return Response(
+                {'ValueError': 'Phone number is not valid'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -116,7 +131,13 @@ def register_order(request):
         address=order_details['address']
     )
     for component in order_details['products']:
-        product = Product.objects.get(id=component['product'])
+        try:
+            product = Product.objects.get(id=component['product'])
+        except ObjectDoesNotExist:
+            return Response(
+                {'ValueError': 'Wrong product ID'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         OrderComponent.objects.create(
             product=product,
             order=order,
