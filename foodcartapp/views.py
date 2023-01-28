@@ -4,7 +4,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import serializers
 from rest_framework import status
+from phonenumber_field.serializerfields import PhoneNumberField 
 
 
 from .models import Product, Order, OrderComponent
@@ -62,8 +64,49 @@ def product_list_api(request):
     })
 
 
+class OrderComponentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderComponent
+        fields = ['product', 'quantity']
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    products = serializers.ListField(
+        child=OrderComponentSerializer(), 
+        allow_empty=False
+    )
+    phonenumber = PhoneNumberField(region='RU')
+
+    class Meta:
+        model = Order
+        fields = ['products', 'firstname', 'lastname', 'phonenumber', 'address']
+
+
 @api_view(['POST'])
 def register_order(request):
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    print(serializer.validated_data)
+    order = Order.objects.create(
+        firstname=serializer.validated_data['firstname'],
+        lastname=serializer.validated_data.get('lastname'),
+        phonenumber=serializer.validated_data['phonenumber'],
+        address=serializer.validated_data['address']
+    )
+    
+    components_details = serializer.validated_data['products']
+    print(components_details)
+    order_components = [OrderComponent(order=order, **fields) for fields in components_details]
+    OrderComponent.objects.bulk_create(order_components)
+    
+    return Response(
+        {'status': 'order created successfully'},
+        status=status.HTTP_201_CREATED
+    )
+
+
+def old_order(request):
     order_details = request.data
 
     required_types = {
