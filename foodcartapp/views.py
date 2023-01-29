@@ -1,12 +1,10 @@
-import phonenumbers
 from django.http import JsonResponse
-from django.core.exceptions import ObjectDoesNotExist
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from phonenumber_field.serializerfields import PhoneNumberField 
+from phonenumber_field.serializerfields import PhoneNumberField
 
 
 from .models import Product, Order, OrderComponent
@@ -72,14 +70,15 @@ class OrderComponentSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     products = serializers.ListField(
-        child=OrderComponentSerializer(), 
-        allow_empty=False
+        child=OrderComponentSerializer(),
+        allow_empty=False,
+        write_only=True
     )
     phonenumber = PhoneNumberField(region='RU')
 
     class Meta:
         model = Order
-        fields = ['products', 'firstname', 'lastname', 'phonenumber', 'address']
+        fields = ['id', 'products', 'firstname', 'lastname', 'phonenumber', 'address']
 
 
 @api_view(['POST'])
@@ -87,106 +86,19 @@ def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
-    print(serializer.validated_data)
     order = Order.objects.create(
         firstname=serializer.validated_data['firstname'],
         lastname=serializer.validated_data.get('lastname'),
         phonenumber=serializer.validated_data['phonenumber'],
         address=serializer.validated_data['address']
     )
-    
+
     components_details = serializer.validated_data['products']
-    print(components_details)
     order_components = [OrderComponent(order=order, **fields) for fields in components_details]
     OrderComponent.objects.bulk_create(order_components)
-    
+
+    new_order_serializer = OrderSerializer(order)
     return Response(
-        {'status': 'order created successfully'},
-        status=status.HTTP_201_CREATED
-    )
-
-
-def old_order(request):
-    order_details = request.data
-
-    required_types = {
-        'products': list,
-        'firstname': str,
-        'phonenumber': str,
-        'address': str,
-    }
-
-    for variable, var_type in required_types.items():
-        if not isinstance(order_details.get(variable), var_type):
-            return Response(
-                {'TypeError': f'{variable} must have type {var_type}, not {type(order_details.get(variable))}'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        elif not order_details.get(variable):
-            return Response(
-                {'ValueError': f'{variable} must not be empty or null'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-    try:
-        parsed_number = phonenumbers.parse(order_details['phonenumber'], 'RU')
-        if not phonenumbers.is_valid_number(parsed_number):
-            return Response(
-                {'ValueError': 'Phone number is not valid'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    except phonenumbers.phonenumberutil.NumberParseException:
-        return Response(
-                {'ValueError': 'Phone number is not valid'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-    for component in order_details['products']:
-        if not isinstance(component, dict):
-            return Response(
-                {'TypeError': 'Product list must only contain dictionaries'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            product_value = component['product']
-            quantity_value = component['quantity']
-            1 / (product_value * quantity_value)
-        except KeyError:
-            return Response(
-                {'KeyError': 'Each product dictionary must have two keys: product, quantity'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except TypeError:
-            return Response(
-                {'TypeError': 'Each key in product dictionary must have type <int>'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except ZeroDivisionError:
-            return Response(
-                {'ValueError': 'Each key in product dictionary must not be zero'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-    order = Order.objects.create(
-        customer_name=order_details['firstname'],
-        customer_last_name=order_details.get('lastname'),
-        customer_phonenumber=order_details['phonenumber'],
-        address=order_details['address']
-    )
-    for component in order_details['products']:
-        try:
-            product = Product.objects.get(id=component['product'])
-        except ObjectDoesNotExist:
-            return Response(
-                {'ValueError': 'Wrong product ID'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        OrderComponent.objects.create(
-            product=product,
-            order=order,
-            amount=component['quantity']
-        )
-    return Response(
-        {'status': 'order created successfully'},
+        new_order_serializer.data,
         status=status.HTTP_201_CREATED
     )
