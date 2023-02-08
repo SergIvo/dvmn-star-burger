@@ -95,6 +95,9 @@ def register_order(request):
 
     components_details = serializer.validated_data['products']
     order_components = [OrderComponent(order=order, **fields) for fields in components_details]
+    for component in order_components:
+        product = Product.objects.get(id=component.product_id)
+        component.price = product.price
     OrderComponent.objects.bulk_create(order_components)
 
     new_order_serializer = OrderSerializer(order)

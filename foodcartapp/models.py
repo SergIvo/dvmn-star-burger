@@ -161,7 +161,7 @@ class Order(models.Model):
         verbose_name_plural = 'заказы на доставку'
 
     def __str__(self):
-        return f'{self.firstname} {self.lastname}, {self.PhoneNumberField}'
+        return f'{self.firstname} {self.lastname}, {self.phonenumber}'
 
 
 class OrderComponent(models.Model):
@@ -171,14 +171,18 @@ class OrderComponent(models.Model):
         related_name='in_orders',
         on_delete=models.CASCADE,
     )
-
     order = models.ForeignKey(
         Order,
         verbose_name='заказ',
         related_name='components',
         on_delete=models.CASCADE,
     )
-
+    price = models.DecimalField(
+        'стоимость',
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )
     quantity = models.PositiveSmallIntegerField(
         'количество',
         validators=[MinValueValidator(1)]

@@ -105,6 +105,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 class OrderComponentInline(admin.TabularInline):
     model = OrderComponent
+    readonly_fields = ['price']
 
 
 @admin.register(Order)
@@ -122,6 +123,16 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         OrderComponentInline
     ]
+
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for obj in formset.deleted_objects:
+            obj.delete()
+        for instance in instances:
+            if not instance.price:
+                instance.price = instance.product.price
+            instance.save()
+        formset.save_m2m()
 
 
 @admin.register(OrderComponent)
