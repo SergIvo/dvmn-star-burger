@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.db import transaction
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -86,19 +87,20 @@ def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
-    order = Order.objects.create(
-        firstname=serializer.validated_data['firstname'],
-        lastname=serializer.validated_data.get('lastname'),
-        phonenumber=serializer.validated_data['phonenumber'],
-        address=serializer.validated_data['address']
-    )
+    with transaction.atomic():
+        order = Order.objects.create(
+            firstname=serializer.validated_data['firstname'],
+            lastname=serializer.validated_data.get('lastname'),
+            phonenumber=serializer.validated_data['phonenumber'],
+            address=serializer.validated_data['address']
+        )
 
-    components_details = serializer.validated_data['products']
-    order_components = [OrderComponent(order=order, **fields) for fields in components_details]
-    for component in order_components:
-        product = Product.objects.get(id=component.product_id)
-        component.price = product.price
-    OrderComponent.objects.bulk_create(order_components)
+        components_details = serializer.validated_data['products']
+        order_components = [OrderComponent(order=order, **fields) for fields in components_details]
+        for component in order_components:
+            product = Product.objects.get(id=component.product_id)
+            component.price = product.price
+        OrderComponent.objects.bulk_create(order_components)
 
     new_order_serializer = OrderSerializer(order)
     return Response(
