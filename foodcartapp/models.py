@@ -128,7 +128,7 @@ class OrderQuerySet(models.QuerySet):
     def with_prices(self):
         orders_with_prices = self.annotate(
             total_price=models.Sum(
-                models.F('components__product__price') * models.F('components__quantity')
+                models.F('components__price') * models.F('components__quantity')
             )
         )
         return orders_with_prices
