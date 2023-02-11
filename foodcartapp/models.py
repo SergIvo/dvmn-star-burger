@@ -146,6 +146,16 @@ class Order(models.Model):
         (DELIVERY, 'Передан курьеру'),
         (FINISH, 'Выполнен')
     ]
+
+    CASH = 'CASH'
+    CARD = 'CARD'
+    NOT_SET = 'NONE'
+    PAYMENT_METHOD_CHOICES = [
+        (CASH, 'Наличными'),
+        (CARD, 'Электронно'),
+        (NOT_SET, 'Не указан')
+    ]
+
     firstname = models.CharField(
         'имя покупателя',
         max_length=50
@@ -177,7 +187,7 @@ class Order(models.Model):
         blank=True,
     )
     creation_dateitme = models.DateTimeField(
-        'Создан',
+        'создан',
         default=timezone.now,
         db_index=True
     )
@@ -188,9 +198,16 @@ class Order(models.Model):
         db_index=True
     )
     delivery_dateitme = models.DateTimeField(
-        'Доставлен',
+        'доставлен',
         blank=True,
         null=True,
+        db_index=True
+    )
+    payment_method = models.CharField(
+        'способ оплаты',
+        max_length=4,
+        choices=PAYMENT_METHOD_CHOICES,
+        default=NOT_SET,
         db_index=True
     )
 
