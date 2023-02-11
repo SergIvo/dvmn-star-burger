@@ -135,6 +135,16 @@ class OrderQuerySet(models.QuerySet):
 
 
 class Order(models.Model):
+    CONFIRMATION = 'CONFIRM'
+    PREPARATION = 'PREPARE'
+    DELIVERY = 'DELIVER'
+    FINISH = 'FINISH'
+    ORDER_STATUS_CHOICES = [
+        (CONFIRMATION, 'Ожидает подтверждения'),
+        (PREPARATION, 'Готовится'),
+        (DELIVERY, 'Передан курьеру'),
+        (FINISH, 'Выполнен')
+    ]
     firstname = models.CharField(
         'имя покупателя',
         max_length=50
@@ -152,6 +162,13 @@ class Order(models.Model):
     address = models.CharField(
         'адрес доставки',
         max_length=200
+    )
+    status = models.CharField(
+        'статус заказа',
+        max_length=7,
+        choices=ORDER_STATUS_CHOICES,
+        default=CONFIRMATION,
+        db_index=True
     )
 
     objects = OrderQuerySet.as_manager()
