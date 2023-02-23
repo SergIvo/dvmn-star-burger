@@ -95,14 +95,18 @@ def view_restaurants(request):
 def view_orders(request):
     products_prefetch = Prefetch('components__product')
     orders = list(
-        Order.objects.exclude(status='FINISH').prefetch_related(products_prefetch).with_prices()
+        Order.objects.exclude(status=Order.FINISH)
+        .prefetch_related(products_prefetch)
+        .select_related('restaurant').with_prices()
+        .order_by('status')
     )
     menu_items = RestaurantMenuItem.objects.filter(availability=True).select_related('restaurant', 'product')
     for order in orders:
-        products = [component.product for component in order.components.all()]
-        order.restaurants_ready_to_cook = [
-            menu_item.restaurant.name for menu_item in menu_items if menu_item.product in products
-        ]
+        if not order.restaurant:
+            products = [component.product for component in order.components.all()]
+            order.restaurants_ready_to_cook = [
+                menu_item.restaurant.name for menu_item in menu_items if menu_item.product in products
+            ]
     return render(request, template_name='order_items.html', context={
         'order_items': orders
     })
