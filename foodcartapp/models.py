@@ -136,10 +136,10 @@ class OrderQuerySet(models.QuerySet):
 
 
 class Order(models.Model):
-    CONFIRMATION = 'CONFIRM'
-    PREPARATION = 'PREPARE'
-    DELIVERY = 'DELIVER'
-    FINISH = 'FINISH'
+    CONFIRMATION = 1
+    PREPARATION = 2
+    DELIVERY = 3
+    FINISH = 4
     ORDER_STATUS_CHOICES = [
         (CONFIRMATION, 'Ожидает подтверждения'),
         (PREPARATION, 'Готовится'),
@@ -174,9 +174,7 @@ class Order(models.Model):
         'адрес доставки',
         max_length=200
     )
-    status = models.CharField(
-        'статус заказа',
-        max_length=7,
+    status = models.IntegerField(
         choices=ORDER_STATUS_CHOICES,
         default=CONFIRMATION,
         db_index=True
@@ -209,6 +207,14 @@ class Order(models.Model):
         choices=PAYMENT_METHOD_CHOICES,
         default=NOT_SET,
         db_index=True
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        verbose_name='исполняющий ресторан',
+        related_name='assigned_orders',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
     )
 
     objects = OrderQuerySet.as_manager()
