@@ -5,6 +5,7 @@ class MapPoint(models.Model):
     address = models.CharField(
         'адрес',
         max_length=100,
+        unique=True
     )
     latitude = models.FloatField(
         verbose_name='Широта',
