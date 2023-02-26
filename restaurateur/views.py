@@ -5,13 +5,15 @@ from django.urls import reverse_lazy
 from django.db.models import Prefetch
 from django.contrib.auth.decorators import user_passes_test
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
-from foodcartapp.geocoding import fetch_coordinates, get_distance
+from mappoint.models import MapPoint
+from mappoint.geocoding import fetch_coordinates, get_distance
 
 
 class Login(forms.Form):
@@ -93,22 +95,40 @@ def view_restaurants(request):
     })
 
 
+def get_or_create_map_point(address):
+    try:
+        map_point = MapPoint.objects.get(address=address)
+        address_geocode = map_point.latitude, map_point.longitude 
+    except ObjectDoesNotExist:
+        address_geocode = fetch_coordinates(settings.YANDEX_GEO_API_KEY, address)
+        if not address_geocode:
+            address_geocode = None, None
+        latitude, longitude = address_geocode
+        
+        MapPoint.objects.create(
+            address=address,
+            latitude=latitude,
+            longitude=longitude,
+        )
+    return address_geocode
+
+
 def find_restaurants(order, products, menu_items):
-    order_geocode = fetch_coordinates(settings.YANDEX_GEO_API_KEY, order.address)
+    order_geocode = get_or_create_map_point(order.address)
+    
     restaurants_with_products = {
         menu_item.restaurant for menu_item in menu_items if menu_item.product in products
     }
     restaurants_with_distances = []
     restaurants_with_no_distances = []
     for restaurant in restaurants_with_products:
-        restaurant_geocode = (restaurant.latitude, restaurant.longitude)
-        if all(restaurant_geocode) and order_geocode:
+        restaurant_geocode = get_or_create_map_point(restaurant.address)
+        if any(restaurant_geocode) and any(order_geocode):
             restaurant.distance = get_distance(order_geocode, restaurant_geocode)
             restaurants_with_distances.append(restaurant)
         else:
             restaurant.distance = None
             restaurants_with_no_distances.append(restaurant)
-    print(restaurants_with_products, restaurants_with_distances, restaurants_with_no_distances)
     return (
         sorted(restaurants_with_distances, key=lambda x: x.distance)
         + restaurants_with_no_distances
@@ -126,7 +146,6 @@ def view_orders(request):
     )
     menu_items = RestaurantMenuItem.objects.filter(availability=True).select_related('restaurant', 'product')
     for order in orders:
-        print(order)
         if not order.restaurant:
             products = [component.product for component in order.components.all()]
             order.restaurants_ready_to_cook = find_restaurants(
