@@ -4,12 +4,14 @@ from django.views import View
 from django.urls import reverse_lazy
 from django.db.models import Prefetch
 from django.contrib.auth.decorators import user_passes_test
+from django.conf import settings
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
+from foodcartapp.geocoding import fetch_coordinates, get_distance
 
 
 class Login(forms.Form):
@@ -91,6 +93,28 @@ def view_restaurants(request):
     })
 
 
+def find_restaurants(order, products, menu_items):
+    order_geocode = fetch_coordinates(settings.YANDEX_GEO_API_KEY, order.address)
+    restaurants_with_products = {
+        menu_item.restaurant for menu_item in menu_items if menu_item.product in products
+    }
+    restaurants_with_distances = []
+    restaurants_with_no_distances = []
+    for restaurant in restaurants_with_products:
+        restaurant_geocode = (restaurant.latitude, restaurant.longitude)
+        if all(restaurant_geocode) and order_geocode:
+            restaurant.distance = get_distance(order_geocode, restaurant_geocode)
+            restaurants_with_distances.append(restaurant)
+        else:
+            restaurant.distance = None
+            restaurants_with_no_distances.append(restaurant)
+    print(restaurants_with_products, restaurants_with_distances, restaurants_with_no_distances)
+    return (
+        sorted(restaurants_with_distances, key=lambda x: x.distance)
+        + restaurants_with_no_distances
+    )
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     products_prefetch = Prefetch('components__product')
@@ -102,11 +126,14 @@ def view_orders(request):
     )
     menu_items = RestaurantMenuItem.objects.filter(availability=True).select_related('restaurant', 'product')
     for order in orders:
+        print(order)
         if not order.restaurant:
             products = [component.product for component in order.components.all()]
-            order.restaurants_ready_to_cook = [
-                menu_item.restaurant.name for menu_item in menu_items if menu_item.product in products
-            ]
+            order.restaurants_ready_to_cook = find_restaurants(
+                order,
+                products,
+                menu_items
+            )
     return render(request, template_name='order_items.html', context={
         'order_items': orders
     })

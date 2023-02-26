@@ -43,7 +43,11 @@
               <summary>Рестораны, готовые к выполнению:</summary>
               <ul>
                 {% for restaurant in item.restaurants_ready_to_cook %}
-                  <li>{{ restaurant }}</li>
+                  {% if  restaurant.distance %}
+                    <li>{{ restaurant.name }} - {{ restaurant.distance }} км</li>
+                  {% else %}
+                    <li>{{ restaurant.name }} - расстояние не известно</li>
+                  {% endif %}
                 {% endfor %}
               </ul>
            </details>
