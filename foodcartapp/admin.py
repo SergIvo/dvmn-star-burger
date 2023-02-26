@@ -3,9 +3,7 @@ from django.shortcuts import reverse, redirect
 from django.templatetags.static import static
 from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.conf import settings
 
-from foodcartapp.geocoding import fetch_coordinates
 from .models import Product
 from .models import ProductCategory
 from .models import Restaurant
@@ -34,18 +32,6 @@ class RestaurantAdmin(admin.ModelAdmin):
     inlines = [
         RestaurantMenuItemInline
     ]
-
-    def save_model(self, request, obj, form, change):
-        if obj.address and (not obj.latitude or not obj.longitude):
-            try:
-                latitude, longitude = fetch_coordinates(
-                    settings.YANDEX_GEO_API_KEY, obj.address
-                )
-                obj.latitude = latitude
-                obj.longitude = longitude
-            except TypeError:
-                pass
-        super().save_model(request, obj, form, change)
 
 
 @admin.register(Product)
