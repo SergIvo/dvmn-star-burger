@@ -185,18 +185,18 @@ class Order(models.Model):
         blank=True,
     )
     creation_dateitme = models.DateTimeField(
-        'создан',
+        'дата и время создания',
         default=timezone.now,
         db_index=True
     )
     confirmation_dateitme = models.DateTimeField(
-        'Подтвержден',
+        'дата и время подтверждения',
         blank=True,
         null=True,
         db_index=True
     )
     delivery_dateitme = models.DateTimeField(
-        'доставлен',
+        'дата и время доставки',
         blank=True,
         null=True,
         db_index=True
