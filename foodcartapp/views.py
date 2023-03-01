@@ -70,12 +70,7 @@ def register_order(request):
     serializer.is_valid(raise_exception=True)
 
     with transaction.atomic():
-        order = Order.objects.create(
-            firstname=serializer.validated_data['firstname'],
-            lastname=serializer.validated_data.get('lastname'),
-            phonenumber=serializer.validated_data['phonenumber'],
-            address=serializer.validated_data['address']
-        )
+        order = serializer.save()
 
         components_details = serializer.validated_data['products']
         order_components = [OrderComponent(order=order, **fields) for fields in components_details]
