@@ -9,6 +9,7 @@ from phonenumber_field.serializerfields import PhoneNumberField
 
 
 from .models import Product, Order, OrderComponent
+from .serializers import OrderComponentSerializer, OrderSerializer
 
 
 def banners_list_api(request):
@@ -61,25 +62,6 @@ def product_list_api(request):
         'ensure_ascii': False,
         'indent': 4,
     })
-
-
-class OrderComponentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrderComponent
-        fields = ['product', 'quantity']
-
-
-class OrderSerializer(serializers.ModelSerializer):
-    products = serializers.ListField(
-        child=OrderComponentSerializer(),
-        allow_empty=False,
-        write_only=True
-    )
-    phonenumber = PhoneNumberField(region='RU')
-
-    class Meta:
-        model = Order
-        fields = ['id', 'products', 'firstname', 'lastname', 'phonenumber', 'address']
 
 
 @api_view(['POST'])
