@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
@@ -95,7 +97,7 @@ def view_restaurants(request):
     })
 
 
-def get_or_create_map_point(address):
+def get_or_create_map_point(address) -> Tuple[float, float]:
     try:
         map_point = MapPoint.objects.get(address=address)
         address_geocode = map_point.latitude, map_point.longitude 
