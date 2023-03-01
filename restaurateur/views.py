@@ -4,7 +4,6 @@ from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
-from django.db.models import Prefetch
 from django.contrib.auth.decorators import user_passes_test
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -139,13 +138,7 @@ def find_restaurants(order, products, menu_items):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    products_prefetch = Prefetch('components__product')
-    orders = list(
-        Order.objects.exclude(status=Order.FINISH)
-        .prefetch_related(products_prefetch)
-        .select_related('restaurant').with_prices()
-        .order_by('status')
-    )
+    orders = list(Order.objects.get_active_orders())
     menu_items = RestaurantMenuItem.objects.filter(availability=True).select_related('restaurant', 'product')
     for order in orders:
         if not order.restaurant:

@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator
+from django.db.models import Prefetch
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -133,6 +134,16 @@ class OrderQuerySet(models.QuerySet):
             )
         )
         return orders_with_prices
+    
+    def get_active_orders(self):
+        products_prefetch = Prefetch('components__product')
+        active_orders = (
+            self.exclude(status=Order.FINISH)
+            .prefetch_related(products_prefetch)
+            .select_related('restaurant').with_prices()
+            .order_by('status')
+        )
+        return active_orders
 
 
 class Order(models.Model):
