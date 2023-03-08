@@ -1,9 +1,15 @@
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator
-from django.db.models import Prefetch
 from phonenumber_field.modelfields import PhoneNumberField
 
+from .custom_querysets import ProductQuerySet, OrderQuerySet
+from .order_model_choices import (
+    ORDER_STATUS_CHOICES, 
+    CONFIRMATION, 
+    PAYMENT_METHOD_CHOICES, 
+    NOT_SET
+)
 
 class Restaurant(models.Model):
     name = models.CharField(
@@ -27,16 +33,6 @@ class Restaurant(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class ProductQuerySet(models.QuerySet):
-    def available(self):
-        products = (
-            RestaurantMenuItem.objects
-            .filter(availability=True)
-            .values_list('product')
-        )
-        return self.filter(pk__in=products)
 
 
 class ProductCategory(models.Model):
@@ -126,47 +122,7 @@ class RestaurantMenuItem(models.Model):
         return f'{self.restaurant.name} - {self.product.name}'
 
 
-class OrderQuerySet(models.QuerySet):
-    def with_prices(self):
-        orders_with_prices = self.annotate(
-            total_price=models.Sum(
-                models.F('components__price') * models.F('components__quantity')
-            )
-        )
-        return orders_with_prices
-    
-    def get_active_orders(self):
-        products_prefetch = Prefetch('components__product')
-        active_orders = (
-            self.exclude(status=Order.FINISH)
-            .prefetch_related(products_prefetch)
-            .select_related('restaurant').with_prices()
-            .order_by('status')
-        )
-        return active_orders
-
-
 class Order(models.Model):
-    CONFIRMATION = 1
-    PREPARATION = 2
-    DELIVERY = 3
-    FINISH = 4
-    ORDER_STATUS_CHOICES = [
-        (CONFIRMATION, 'Ожидает подтверждения'),
-        (PREPARATION, 'Готовится'),
-        (DELIVERY, 'Передан курьеру'),
-        (FINISH, 'Выполнен')
-    ]
-
-    CASH = 'CASH'
-    CARD = 'CARD'
-    NOT_SET = 'NONE'
-    PAYMENT_METHOD_CHOICES = [
-        (CASH, 'Наличными'),
-        (CARD, 'Электронно'),
-        (NOT_SET, 'Не указан')
-    ]
-
     firstname = models.CharField(
         'имя покупателя',
         max_length=50
