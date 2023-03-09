@@ -14,7 +14,8 @@ class MapPointAdmin(admin.ModelAdmin):
     ]
 
     def save_model(self, request, obj, form, change):
-        if obj.address and (not obj.latitude or not obj.longitude):
+        if 'address' in form.changed_data:
+            print('Address changed')
             try:
                 latitude, longitude = fetch_coordinates(
                     settings.YANDEX_GEO_API_KEY, obj.address
