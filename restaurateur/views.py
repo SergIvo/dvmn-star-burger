@@ -13,8 +13,7 @@ from django.contrib.auth import views as auth_views
 
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
-from mappoint.models import MapPoint
-from mappoint.geocoding import fetch_coordinates, get_distance
+from .restaurant_searching_tools import find_restaurants, sort_by_distances
 
 
 class Login(forms.Form):
@@ -96,57 +95,16 @@ def view_restaurants(request):
     })
 
 
-def get_or_create_map_point(address) -> Tuple[float, float]:
-    try:
-        map_point = MapPoint.objects.get(address=address)
-        address_geocode = map_point.latitude, map_point.longitude 
-    except ObjectDoesNotExist:
-        address_geocode = fetch_coordinates(settings.YANDEX_GEO_API_KEY, address)
-        if not address_geocode:
-            address_geocode = None, None
-        latitude, longitude = address_geocode
-        
-        MapPoint.objects.create(
-            address=address,
-            latitude=latitude,
-            longitude=longitude,
-        )
-    return address_geocode
-
-
-def find_restaurants(order, products, menu_items):
-    order_geocode = get_or_create_map_point(order.address)
-    
-    restaurants_with_products = {
-        menu_item.restaurant for menu_item in menu_items if menu_item.product in products
-    }
-    restaurants_with_distances = []
-    restaurants_with_no_distances = []
-    for restaurant in restaurants_with_products:
-        restaurant_geocode = get_or_create_map_point(restaurant.address)
-        if any(restaurant_geocode) and any(order_geocode):
-            restaurant.distance = get_distance(order_geocode, restaurant_geocode)
-            restaurants_with_distances.append(restaurant)
-        else:
-            restaurant.distance = None
-            restaurants_with_no_distances.append(restaurant)
-    return (
-        sorted(restaurants_with_distances, key=lambda x: x.distance)
-        + restaurants_with_no_distances
-    )
-
-
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     orders = list(Order.objects.get_active_orders())
     menu_items = RestaurantMenuItem.objects.filter(availability=True).select_related('restaurant', 'product')
     for order in orders:
         if not order.restaurant:
-            products = [component.product for component in order.components.all()]
-            order.restaurants_ready_to_cook = find_restaurants(
+            restaurants_with_products = find_restaurants(order, menu_items)
+            order.restaurants_ready_to_cook = sort_by_distances(
                 order,
-                products,
-                menu_items
+                restaurants_with_products,
             )
     return render(request, template_name='order_items.html', context={
         'order_items': orders
