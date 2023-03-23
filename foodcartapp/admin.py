@@ -128,7 +128,7 @@ class OrderAdmin(admin.ModelAdmin):
         'phonenumber',
         'address',
     ]
-    readonly_fields = ['creation_dateitme']
+    readonly_fields = ['creation_datetime']
     inlines = [
         OrderComponentInline
     ]
