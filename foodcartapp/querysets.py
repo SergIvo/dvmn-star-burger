@@ -1,17 +1,16 @@
 from django.db import models
 from django.db.models import Prefetch
 
-from .order_model_choices import FINISH
+from .choices import FINISH
 
 
 class ProductQuerySet(models.QuerySet):
     def available(self):
-        products = (
-            RestaurantMenuItem.objects
-            .filter(availability=True)
-            .values_list('product')
+        products = (self
+            .prefetch_related('menu_items')
+            .filter(menu_items__availability__exact=True)
         )
-        return self.filter(pk__in=products)
+        return products.distinct()
 
 
 class OrderQuerySet(models.QuerySet):

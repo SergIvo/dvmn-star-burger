@@ -3,8 +3,8 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 
-from .custom_querysets import ProductQuerySet, OrderQuerySet
-from .order_model_choices import (
+from .querysets import ProductQuerySet, OrderQuerySet
+from .choices import (
     ORDER_STATUS_CHOICES, 
     CONFIRMATION, 
     PAYMENT_METHOD_CHOICES, 
