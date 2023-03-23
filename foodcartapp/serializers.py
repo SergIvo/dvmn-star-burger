@@ -12,8 +12,8 @@ class OrderComponentSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    products = serializers.ListField(
-        child=OrderComponentSerializer(),
+    products = OrderComponentSerializer(
+        many=True,
         allow_empty=False,
         write_only=True
     )
