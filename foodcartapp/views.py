@@ -72,12 +72,14 @@ def register_order(request):
     with transaction.atomic():
         order = serializer.save()
 
-        components_details = serializer.validated_data['products']
-        order_components = [OrderComponent(order=order, **fields) for fields in components_details]
-        for component in order_components:
-            product = Product.objects.get(id=component.product_id)
-            component.price = product.price
-        OrderComponent.objects.bulk_create(order_components)
+    components_details = serializer.validated_data['products']
+    for component in components_details:
+        component['order'] = order.pk
+        component['price'] = component['product'].price
+        component['product'] = component['product'].pk
+    order_components_serializer = OrderComponentSerializer(data=components_details, many=True)
+    order_components_serializer.is_valid(raise_exception=True)
+    order_components_serializer.save()
 
     new_order_serializer = OrderSerializer(order)
     return Response(

@@ -8,7 +8,9 @@ from .models import Order, OrderComponent
 class OrderComponentSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderComponent
-        fields = ['product', 'quantity']
+        fields = ['product', 'order', 'price', 'quantity']
+        
+        extra_kwargs = {'order': {'required': False}, 'price': {'required': False}}
 
 
 class OrderSerializer(serializers.ModelSerializer):
