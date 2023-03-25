@@ -2,13 +2,11 @@ from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import serializers
 from rest_framework import status
-from phonenumber_field.serializerfields import PhoneNumberField
 
 
-from .models import Product, Order, OrderComponent
-from .serializers import OrderComponentSerializer, OrderSerializer
+from .models import Product
+from .serializers import OrderSerializer
 
 
 def banners_list_api(request):
@@ -67,17 +65,7 @@ def product_list_api(request):
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-
     order = serializer.save()
-
-    components_details = serializer.validated_data['products']
-    for component in components_details:
-        component['order'] = order.pk
-        component['price'] = component['product'].price
-        component['product'] = component['product'].pk
-    order_components_serializer = OrderComponentSerializer(data=components_details, many=True)
-    order_components_serializer.is_valid(raise_exception=True)
-    order_components_serializer.save()
 
     new_order_serializer = OrderSerializer(order)
     return Response(
