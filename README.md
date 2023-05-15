@@ -59,6 +59,11 @@ pip install -r requirements.txt
 SECRET_KEY=django-insecure-0if40nf4nf93n4
 ```
 
+В переменной `DATABASE_URL` укажите данные для подключения к базе данных Postgres. Данные должны быть указаны в следующем формате:
+```sh
+DATABASE_URL=postgres://ИМЯ_ПОЛЬЗОВАТЕЛЯ:ПАРОЛЬ@ХОСТ:ПОРТ/НАЗВАНИЕ_БАЗЫ_ДАННЫХ
+```
+
 Добавьте переменную окружения `YANDEX_GEO_API_KEY`. Это токен Yandex API, необходимый для привязки адресов к геокоординатам и вычисления расстояний между ними. Получить его можно по адресу [developer.tech.yandex.ru/services/](https://developer.tech.yandex.ru/services/), нажав на кнопку "Подключить API" и выбрав во всплывающем окне опцию "JavaScript API и HTTP Геокодер":
 ```sh
 YANDEX_GEO_API_KEY=<ваш персональный токен Яндекс API>
@@ -166,8 +171,11 @@ Parcel будет следить за файлами в каталоге `bundle
 
 - `DEBUG` — дебаг-режим. Поставьте `False`.
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
-- `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
+- `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts).
+- `DATABASE_URL` — данные для подключения к базе данных Postgres.
 - `YANDEX_GEO_API_KEY`- ваш персональный токен Яндекс API.
+- `ROLLBAR_ACCESS_TOKEN` - ваш токен Rollbar.
+- `ROLLBAR_ENVIRONMENT` - название окружения Rollbar, в этом случае "production".
 
 ## Цели проекта
 
