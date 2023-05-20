@@ -5,7 +5,7 @@ echo "Starting deployment"
 
 cd /opt/dvmn-star-burger
 
-# git pull origin master
+git pull origin master
 
 if ls venv
 then
@@ -17,9 +17,7 @@ fi
 
 source venv/bin/activate
 
-# pip install -r requirements.txt
-echo "Install requirements"
-
+pip install -r requirements.txt
 
 apt install nodejs
 apt install npm
