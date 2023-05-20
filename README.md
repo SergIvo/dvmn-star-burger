@@ -177,6 +177,11 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ROLLBAR_ACCESS_TOKEN` - ваш токен Rollbar.
 - `ROLLBAR_ENVIRONMENT` - название окружения Rollbar, в этом случае "production".
 
+Для обновления prod-версии сайта в случае внесения изменений в репозиторий запустите скрипт `deploy-srtarburger.sh`:
+```sh
+./deploy-starburger.sh
+'''
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).
