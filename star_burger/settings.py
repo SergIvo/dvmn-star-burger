@@ -60,12 +60,13 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.redirects.RedirectsPanel',
 ]
 
-ROLLBAR = {
-    'access_token': env('ROLLBAR_ACCESS_TOKEN'),
-    'environment': env('ROLLBAR_ENVIRONMENT', 'development'),
-    'code_version': '1.0',
-    'root': BASE_DIR,
-}
+if env('ROLLBAR_ACCESS_TOKEN', ''):
+    ROLLBAR = {
+        'access_token': env('ROLLBAR_ACCESS_TOKEN'),
+        'environment': env('ROLLBAR_ENVIRONMENT', 'development'),
+        'code_version': '1.0',
+        'root': BASE_DIR,
+    }
 
 TEMPLATES = [
     {
