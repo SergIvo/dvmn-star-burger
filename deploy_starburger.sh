@@ -19,9 +19,6 @@ source venv/bin/activate
 
 pip install -r requirements.txt
 
-apt install nodejs
-apt install npm
-
 npm ci --dev
 
 python3 manage.py collectstatic --noinput
