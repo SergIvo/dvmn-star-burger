@@ -5,6 +5,8 @@ echo "Starting deployment"
 
 cd /opt/dvmn-star-burger
 
+git add .
+git commit -m "Save changes before redeployment"
 git pull origin master
 
 if ls venv
@@ -23,7 +25,7 @@ npm ci --dev
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 
 python3 manage.py collectstatic --noinput
-python3 manage.py migrate
+python3 manage.py migrate --noinput
 
 systemctl restart starburger-django
 
