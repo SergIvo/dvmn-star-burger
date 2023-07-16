@@ -1,0 +1,15 @@
+FROM python:3.10-alpine
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN apk add --no-cache python3 postgresql-libs
+RUN apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev
+RUN apk add --no-cache tiff-dev jpeg-dev openjpeg-dev zlib-dev freetype-dev lcms2-dev \
+    libwebp-dev tcl-dev tk-dev harfbuzz-dev fribidi-dev libimagequant-dev \
+    libxcb-dev libpng-dev
+RUN pip install -r requirements.txt
+RUN apk --purge del .build-deps
+
+COPY .  /app/

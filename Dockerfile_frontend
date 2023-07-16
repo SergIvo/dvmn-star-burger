@@ -1,0 +1,6 @@
+FROM node:16.17.0-bullseye-slim
+
+WORKDIR /app
+COPY . /app/
+
+RUN npm ci --dev

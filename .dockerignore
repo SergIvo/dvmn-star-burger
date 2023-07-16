@@ -1,0 +1,11 @@
+venv/
+node_modules/
+staticfiles/
+.parcel-cache/
+deploy_starburger.sh
+clipboard.txt
+README.md
+.gitignore
+.git
+.env
+.editorconfig
